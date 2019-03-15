@@ -1,4 +1,8 @@
 <?php
+/*
+ * References: https://www.codeofaninja.com/2017/02/create-simple-rest-api-in-php.html
+ * 
+ */
 $methodCall = 'index';
 $controllerLocation = 'Controllers';
 // Your custom class dir
@@ -41,7 +45,10 @@ if(file_exists($class_file)){
 //            header("HTTP/1.0 404 Not Found");
 //            echo '404 Cannot find method '.$methodCall;
 //            exit();
-            sendErrorPage(404);
+//            sendErrorPage(404);
+            http_response_code(404);
+            echo '404 Cannot find method1 '.$methodCall;
+            exit();
         }
     }else{
         if($params[0] && is_numeric($params[0])){
@@ -52,7 +59,9 @@ if(file_exists($class_file)){
 //                header("HTTP/1.0 404 Not Found");
 //                echo '404 Cannot find method '.$methodCall;
 //                exit();
-                sendErrorPage(404);
+                http_response_code(404);
+                echo '404 Cannot find method2 '.$methodCall;
+                exit();
             }
         }else{
             // First check if a method exists or else send this as a param to index method
@@ -65,14 +74,27 @@ if(file_exists($class_file)){
 //                header("HTTP/1.0 404 Not Found");
 //                echo '404 Cannot find method '.$methodCall;
 //                exit();
-                sendErrorPage(404);
+                
+                http_response_code(404);
+                if(array_key_exists('HTTP_ACCEPT', $_SERVER)){
+                   if($_SERVER['HTTP_ACCEPT'] == 'application/json'){
+                       echo json_encode([
+                           'message' => 'Cannot find method '.$methodCall
+                       ]);
+                       exit();
+                   } 
+                }
+                echo '404 Cannot find method3 '.$methodCall;
+                exit();
             }
         }
     }
 
 }else{
 //    echo '404 Cannot find controller '.$controller;
-    sendErrorPage(404);
+    http_response_code(404);
+    echo '404 Cannot find controller '.$controller;
+    exit();
 }
 
 function getView($view, $data = '', $str = false) {

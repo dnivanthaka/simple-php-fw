@@ -21,4 +21,7 @@ class TestPHP extends Controller {
 //        echo 'test';
         $this->renderView('code', compact('output'));
     }
+    public function testm($param1, $param2){
+        echo $param1.' - '.$param2;
+    }
 }

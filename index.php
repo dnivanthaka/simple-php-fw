@@ -3,13 +3,15 @@
  * References: https://www.codeofaninja.com/2017/02/create-simple-rest-api-in-php.html
  * 
  */
+//require 'config/main.php';
+
 $methodCall = 'index';
 $controllerLocation = 'Controllers';
 // Your custom class dir
 define('CLASS_DIR', 'src'.DIRECTORY_SEPARATOR);
 
 // Add your class dir to include path
-set_include_path(get_include_path().PATH_SEPARATOR.CLASS_DIR);
+set_include_path(__DIR__.DIRECTORY_SEPARATOR.CLASS_DIR);
 
 // You can use this trick to make autoloader look for commonly used "My.class.php" type filenames
 spl_autoload_extensions('.php');
@@ -21,7 +23,9 @@ spl_autoload_register(function($class){
 //        }catch(\LogicException $e){
 //            echo '404 Cannot find controller '.$class;
 //        } 
-    spl_autoload(ucfirst($class));
+    $class = str_replace("\\", "/", $class);
+    //spl_autoload($class);
+    require get_include_path().$class.'.php';
 });
 
 //    print_r($_SERVER);
@@ -46,9 +50,7 @@ if(file_exists($class_file)){
 //            echo '404 Cannot find method '.$methodCall;
 //            exit();
 //            sendErrorPage(404);
-            http_response_code(404);
-            echo '404 Cannot find method1 '.$methodCall;
-            exit();
+            sendResponse(404, 'Cannot find method '.$methodCall);
         }
     }else{
         if($params[0] && is_numeric($params[0])){
@@ -59,9 +61,7 @@ if(file_exists($class_file)){
 //                header("HTTP/1.0 404 Not Found");
 //                echo '404 Cannot find method '.$methodCall;
 //                exit();
-                http_response_code(404);
-                echo '404 Cannot find method2 '.$methodCall;
-                exit();
+                sendResponse(404, 'Cannot find method '.$methodCall);
             }
         }else{
             // First check if a method exists or else send this as a param to index method
@@ -70,31 +70,13 @@ if(file_exists($class_file)){
                 call_user_func_array(array($controllerInstance, $params[0]), $actual_params);
                 exit();
             }else{
-                //404 error
-//                header("HTTP/1.0 404 Not Found");
-//                echo '404 Cannot find method '.$methodCall;
-//                exit();
-                
-                http_response_code(404);
-                if(array_key_exists('HTTP_ACCEPT', $_SERVER)){
-                   if($_SERVER['HTTP_ACCEPT'] == 'application/json'){
-                       echo json_encode([
-                           'message' => 'Cannot find method '.$methodCall
-                       ]);
-                       exit();
-                   } 
-                }
-                echo '404 Cannot find method3 '.$methodCall;
-                exit();
+                sendResponse(404, 'Cannot find method '.$methodCall);
             }
         }
     }
 
 }else{
-//    echo '404 Cannot find controller '.$controller;
-    http_response_code(404);
-    echo '404 Cannot find controller '.$controller;
-    exit();
+    sendResponse(404, 'Cannot find controller '.$methodCall);
 }
 
 function getView($view, $data = '', $str = false) {
@@ -104,6 +86,21 @@ function getView($view, $data = '', $str = false) {
 
 function loadLibrary($name) {
     require 'src'.DIRECTORY_SEPARATOR.'Lib'.DIRECTORY_SEPARATOR.$name.'.php';
+}
+
+function sendResponse($code, $message){
+    http_response_code(404);
+    if(array_key_exists('HTTP_ACCEPT', $_SERVER)){
+        if($_SERVER['HTTP_ACCEPT'] == 'application/json'){
+            echo json_encode([
+                'message' => $message
+            ]);
+            exit();
+        } 
+    }
+
+    require 'assets'.DIRECTORY_SEPARATOR.'errorpages'.DIRECTORY_SEPARATOR.$code.'.php';
+    exit();
 }
 
 function sendErrorPage($errorCode, $data = []) {
